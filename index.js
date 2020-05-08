@@ -14,7 +14,7 @@ document.body.appendChild( renderer.domElement );
 const scene = new THREE.Scene();
 scene.background = new THREE.Color( 0xffffff );
 
-// scene
+// camera
 const fov = 0.8 * 180 / Math.PI;
 const el = renderer.domElement;
 const defaultCamera = new THREE.PerspectiveCamera( fov, el.clientWidth / el.clientHeight, 0.01, 1000 );
@@ -23,19 +23,15 @@ scene.add(defaultCamera);
 // loader
 const loader = new THREE.GLTFLoader();
 loader.load(
-	// resource URL
-	'./object.gltf',
-	// called when the resource is loaded
-	function ( gltf ) {
+	'./apple.glb',
+	function loaded( gltf ) {
 		init(gltf);
 	},
 
-	// called while loading is progressing
-	function ( xhr ) {
+	function loading( xhr ) {
 		// console.log( ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
 	},
-	// called when loading has errors
-	function ( error ) {
+	function error( error ) {
 		console.log( 'An error happened', error.message );
 	}
 );
@@ -60,7 +56,7 @@ function init(gltf) {
 	object.position.y += (object.position.y - center.y);
 	object.position.z += (object.position.z - center.z);
 
-		defaultCamera.near = size / 100;
+	defaultCamera.near = size / 100;
 	defaultCamera.far = size * 100;
 	defaultCamera.updateProjectionMatrix();
 	const camera = defaultCamera;// gltf.camera || gltf.cameras[0];
@@ -68,6 +64,7 @@ function init(gltf) {
 	function render() {
 		renderer.render(scene, camera);
 	}
+
 	object.traverse((node) => {
 	  if (node.isLight) {
 	    // this.state.addLights = false;
@@ -76,10 +73,6 @@ function init(gltf) {
 	    node.material.depthWrite = !node.material.transparent;
 	  }
 	});
-
-	const cube = object.children[0];
-	cube.rotation.x += 0.8;
-	cube.rotation.y += 0.8;
 
 	const light1  = new THREE.AmbientLight(0xFFFFFF, 0.3);
 	light1.name = 'ambient_light';
@@ -107,9 +100,12 @@ function init(gltf) {
 	}
 
 	/*
+	const cube = object.children[0];
+	cube.rotation.x += 0.8;
+	cube.rotation.y += 0.8;
 	const animate = function () {
-		requestAnimationFrame( animate );
 
+		requestAnimationFrame( animate );
 		cube.rotation.x += 0.005;
 		cube.rotation.y += 0.005;
 
