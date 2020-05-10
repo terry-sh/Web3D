@@ -40,14 +40,13 @@ loader.load(
 function init(gltf) {
 	const object = gltf.scene || gltf.scenes[0];
 	scene.add(object);
+	object.rotation.x = 0.3;
 
 	// gltf.animations; // Array<THREE.AnimationClip>
 	// gltf.scene; // THREE.Group
 	// gltf.scenes; // Array<THREE.Group>
 	// gltf.cameras; // Array<THREE.Camera>
 	// gltf.asset; // Object
-
-	console.log(gltf);
 
 	const box = new THREE.Box3().setFromObject(object);
 	const size = box.getSize(new THREE.Vector3()).length();
@@ -85,8 +84,8 @@ function init(gltf) {
 
 	controls = new THREE.OrbitControls( camera, renderer.domElement );
 	controls.addEventListener( 'change', render ); // use if there is no animation loop
-	controls.minDistance = 2;
-	controls.maxDistance = 10;
+	controls.minDistance = 6;
+	controls.maxDistance = 18;
 	controls.target.set( 0, 0, - 0.2 );
 	controls.update();
 
