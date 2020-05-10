@@ -1,99 +1,4 @@
 
-function createRenderer() {
-	const renderer = new THREE.WebGLRenderer();
-	renderer.setClearColor(0xffffff, 1);
-	renderer.setSize(window.innerWidth, window.innerHeight);
-	renderer.toneMapping = THREE.ACESFilmicToneMapping;
-	renderer.toneMappingExposure = 0.8;
-	renderer.physicallyCorrectLights = true;
-	renderer.outputEncoding = THREE.sRGBEncoding;
-	document.body.appendChild(renderer.domElement);
-	return renderer;
-}
-
-function createCamera() {
-	const camera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 0.1, 1000);
-	camera.position.z = 5;
-	return camera;
-}
-
-function createObject(GeometryClass, ...args) {
-	const geometry = new GeometryClass(...args);
-	const wireframe = new THREE.WireframeGeometry(geometry);
-	const material = new THREE.MeshBasicMaterial({ color: 0x00ff00, reflectivity: 0.6 });
-	const cube = new THREE.LineSegments(wireframe, material);
-	cube.material.depthTest = false;
-	cube.material.opacity = 1;
-
-	return cube;
-}
-
-function createRender(renderer, cfg, geometryCfg) {
-	const camera = createCamera();
-	controls = new THREE.OrbitControls(camera, renderer.domElement);
-	controls.addEventListener('change', render);
-	controls.minDistance = 4;
-	controls.maxDistance = 18;
-	controls.enableZoom = false;
-	controls.enablePan = false;
-	controls.target.set(0, 0, - 0.2);
-	controls.update();
-
-	function render() {
-		const scene = new THREE.Scene();
-		const args = geometryCfg.params.map(({ key }) => cfg[key]);
-		const cube = createObject(geometryCfg.clazz, ...args);
-		// cube.rotation.x = Math.PI / 4;
-		// cube.rotation.z = Math.PI / 4;
-		scene.add(cube);
-		scene.add(camera);
-		renderer.render(scene, camera);
-	}
-	return render;
-}
-
-class RenderManager {
-	constructor(geometryCfg) {
-		this.renderer = createRenderer();
-
-		if (geometryCfg) {
-			this.invoke(geometryCfg);
-		}
-	}
-
-	invoke(geometryCfg) {
-		const cfg = geometryCfg.params.reduce((init, { key, value }) => (init[key] = value, init), {});
-		const render = createRender(this.renderer, cfg, geometryCfg);
-
-		if (this.gui) {
-			(this.controllers || []).forEach(con => this.gui.remove(con));
-			this.gui.destroy();
-		}
-		const gui = new dat.GUI();
-		this.gui = gui;
-		this.controllers = geometryCfg.params.map((item) => {
-			let controller;
-			if ('status' in item) {
-				controller = gui.add(cfg, item.key, item.status);
-			} else if ('items' in item) {
-				controller = gui.add(cfg, item.key, item.items);
-			} else if ('color' in item) {
-				controller = gui.addColor(cfg, item.key);
-			} else {
-				const { min, max, step } = item;
-				controller = gui.add(cfg, item.key, min, max, typeof step == 'number' ? step : 0.001);
-			}
-			controller.onChange(() => {
-				render();
-			});
-			return controller;
-		});
-	
-		render();
-	}
-}
-
-
 const Geometries = {
 	BoxGeometry: {
 		clazz: THREE.BoxGeometry,
@@ -126,35 +31,236 @@ const Geometries = {
 			{ key: "thetaStart", value: 0, min: 0 },
 			{ key: "thetaLength", value: 2 * Math.PI, min: 0 }
 		],
+	},
+	CylinderGeometry: {
+		clazz: THREE.CylinderGeometry,
+		params: [
+			{ key: "radiusTop", value: 1, min: 0.1 },
+			{ key: "radiusBottom", value: 1, min: 0.1 },
+			{ key: "height", value: 1, min: 0.1 },
+			{ key: "radialSegments", value: 8, min: 3, step: 1 },
+			{ key: "heightSegments", value: 1, min: 1, step: 1 },
+			{ key: "openEnded", value: false },
+			{ key: "thetaStart", value: 0, min: 0 },
+			{ key: "thetaLength", value: 2 * Math.PI, min: 0 }
+		],
+	},
+	DodecahedronGeometry: {
+		clazz: THREE.DodecahedronGeometry,
+		params: [
+			{ key: "radius", value: 1, min: 0.1 },
+			{ key: "detail", value: 0, min: 0, step: 1 }
+		]
+	},
+	IcosahedronGeometry: {
+		clazz: THREE.IcosahedronGeometry,
+		params: [
+			{ key: "radius", value: 1, min: 0.1 },
+			{ key: "detail", value: 0, min: 0, step: 1 },
+		]
+	},
+	OctahedronGeometry: {
+		clazz: THREE.OctahedronGeometry,
+		params: [
+			{ key: "radius", value: 1, min: 0.1 },
+			{ key: "detail", value: 0, min: 0, step: 1 },
+		]
+	},
+	PlaneGeometry: {
+		clazz: THREE.PlaneGeometry,
+		params: [
+			{ key: "width", value: 1, min: 0.1 },
+			{ key: "height", value: 1, min: 0.1 },
+			{ key: "widthSegments", value: 1, min: 1, step: 1 },
+			{ key: "heightSegments", value: 1, min: 1, step: 1 },
+		]
+	},
+	RingGeometry: {
+		clazz: THREE.RingGeometry,
+		params: [
+			{ key: "innerRadius", value: 0.5, min: 0.1 },
+			{ key: "outerRadius", value: 1, min: 0.1 },
+			{ key: "thetaSegments", value: 8, min: 3, step: 1 },
+			{ key: "phiSegments", value: 8, min: 1, step: 1 },
+			{ key: "thetaStart", value: 0, min: 0 },
+			{ key: "thetaLength", value: 2 * Math.PI, min: 0 },
+		]
+	},
+	SphereGeometry: {
+		clazz: THREE.SphereGeometry,
+		params: [
+			{ key: "radius", value: 1, min: 0.1 },
+			{ key: "widthSegments", value: 8, min: 3, step: 1 },
+			{ key: "heightSegments", value: 6, min: 2, step: 1 },
+			{ key: "phiStart", value: 0 },
+			{ key: "phiLength", value: 2 * Math.PI },
+			{ key: "thetaStart", value: 0 },
+			{ key: "thetaLength", value: Math.PI },
+		]
+	},
+	TetrahedronGeometry: {
+		clazz: THREE.TetrahedronGeometry,
+		params: [
+			{ key: "radius", value: 1, min: 0.1 },
+			{ key: "detail", value: 0, min: 0, step: 1 },
+		]
+	},
+	TorusGeometry: {
+		clazz: THREE.TorusGeometry,
+		params: [
+			{ key: "radius", value: 1, min: 0.01 },
+			{ key: "tube", value: 0.4, min: 0.01, step: 0.01 },
+			{ key: "radialSegments", value: 8, min: 1, step: 1 },
+			{ key: "tubularSegments", value: 6, min: 1, step: 1 },
+			{ key: "arc", value: 2 * Math.PI },
+		]
+	},
+	TorusKnotGeometry: {
+		clazz: THREE.TorusKnotGeometry,
+		params: [
+			{ key: "radius", value: 1, min: 0.01 },
+			{ key: "tube", value: 0.4, min: 0.01, step: 0.01 },
+			{ key: "tubularSegments", value: 64, min: 1, step: 1 },
+			{ key: "radialSegments", value: 8, min: 1, step: 1 },
+			{ key: "p", value: 2, min: 1, step: 1 },
+			{ key: "q", value: 3, min: 1, step: 1 },
+		]
 	}
 }
 
-function createSelect() {
-	const geometryCfg = Object.keys(Geometries);
-	const selectElement = document.createElement('select');
-	geometryCfg.forEach((option, index) => {
-		const optionElement = document.createElement('option');
-		optionElement.value = option;
-		optionElement.innerText = option;
-		if (index === 0) {
-			optionElement.selected = true;
+function createRenderer() {
+	const renderer = new THREE.WebGLRenderer();
+	renderer.setClearColor(0xffffff, 1);
+	renderer.setSize(window.innerWidth, window.innerHeight);
+	renderer.toneMapping = THREE.ACESFilmicToneMapping;
+	renderer.toneMappingExposure = 0.8;
+	renderer.physicallyCorrectLights = true;
+	renderer.outputEncoding = THREE.sRGBEncoding;
+	document.body.appendChild(renderer.domElement);
+	return renderer;
+}
+
+function createCamera() {
+	const camera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 0.1, 1000);
+	camera.position.z = 5;
+	return camera;
+}
+
+function createObject(GeometryClass, generalConfig, ...args) {
+	const geometry = new GeometryClass(...args);
+	if (generalConfig.enableWireframe) {
+		const material = new THREE.MeshBasicMaterial({
+			color: generalConfig.material,
+			reflectivity: 0.6,
+			depthTest: false,
+			opacity: 0.5,
+		});
+		const wireframe = new THREE.WireframeGeometry(geometry);
+		const object = new THREE.LineSegments(wireframe, material);
+		return object;
+	} else {
+		const material = new THREE.MeshPhongMaterial({
+			color: generalConfig.material,
+			side: THREE.DoubleSide,
+			flatShading: true
+		});
+		const object = new THREE.Mesh(geometry, material);
+		return object;
+	}
+}
+
+class RenderManager {
+	constructor() {
+		this.renderer = createRenderer();
+		this.render = () => {};
+
+		this.generalConfig = {
+			type: "BoxGeometry",
+			enableWireframe: true,
+			material: "#000000"
 		}
-		selectElement.appendChild(optionElement);
-	});
+		const generalCfgUI = new dat.GUI();
+		const typeController = generalCfgUI.add(this.generalConfig, "type", Object.keys(Geometries));
+		typeController.onChange(this.onGeometryChange.bind(this));
+		const generalControllers = [
+			generalCfgUI.add(this.generalConfig, "enableWireframe"),
+			generalCfgUI.addColor(this.generalConfig, "material")
+		];
+		generalControllers.forEach(con => {
+			con.onChange(() => this.render());
+		});
+		this.generalControllers = generalControllers;
+		this.generalCfgUI = generalCfgUI;
+	}
 
-	selectElement.addEventListener("change", onGeometryChange);
-
-	const renderManager = new RenderManager();
-	function onGeometryChange (event) {
-		const geometry = Geometries[event.target.value];
+	onGeometryChange(type) {
+		const geometry = Geometries[type];
 		if (geometry) {
-			renderManager.invoke(geometry);
+			this.rebuild(geometry);
 		}
 	}
 
-	const wrapper = document.getElementById("options-wrapper");
-	wrapper.appendChild(selectElement);
-	renderManager.invoke(Geometries["BoxGeometry"]);
+	buildRender(cfg, geometryCfg) {
+		const renderer = this.renderer;
+		const camera = createCamera();
+		const render = () => {
+			const scene = new THREE.Scene();
+	
+			const args = geometryCfg.params.map(({ key }) => cfg[key]);
+			const cube = createObject(geometryCfg.clazz, this.generalConfig, ...args);
+			// cube.rotation.x = Math.PI / 4;
+			// cube.rotation.z = Math.PI / 4;
+			scene.add(cube);
+			scene.add(camera);
+			renderer.render(scene, camera);
+		}
+
+		const controls = new THREE.OrbitControls(camera, renderer.domElement);
+		controls.addEventListener('change', render);
+		controls.minDistance = 4;
+		controls.maxDistance = 18;
+		controls.enableZoom = false;
+		controls.enablePan = false;
+		controls.target.set(0, 0, - 0.2);
+		controls.update();
+	
+		return render;
+	}
+	
+	rebuild(geometryCfg) {
+		const props = geometryCfg.params.reduce((init, { key, value }) => (init[key] = value, init), {});
+		const render = this.buildRender(props, geometryCfg);
+
+		if (this.propsGui) {
+			(this.propsControllers || []).forEach(con => this.propsGui.remove(con));
+		} else {
+			this.propsGui = new dat.GUI();
+		}
+
+		this.propsControllers = null;
+		this.propsControllers = geometryCfg.params.map((item) => {
+			const gui = this.propsGui;
+
+			let controller;
+			if ('status' in item) {
+				controller = gui.add(props, item.key, item.status);
+			} else if ('items' in item) {
+				controller = gui.add(props, item.key, item.items);
+			} else if ('color' in item) {
+				controller = gui.addColor(props, item.key);
+			} else {
+				const { min, max, step } = item;
+				controller = gui.add(props, item.key, min, max, typeof step == 'number' ? step : 0.001);
+			}
+			controller.onChange(render);
+			return controller;
+		});
+
+		render();
+		this.render = render;
+	}
 }
 
-createSelect();
+
+const renderManager = new RenderManager();
+renderManager.rebuild(Geometries["BoxGeometry"]);
