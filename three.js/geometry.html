@@ -3,16 +3,23 @@
 <head>
 	<meta charset="UTF-8">
 	<title>THREE.js</title>
+	<link rel="stylesheet" href="./node_modules/dat.gui/build/dat.gui.css">
 	<style>
 		body { margin: 0; }
 		canvas { display: block; }
+		#options-wrapper {
+			position: fixed;
+			top: 4px;
+			left: 4px;
+		}
+	
 	</style>
 	<script src="./node_modules/three/build/three.js"></script>
 	<script src="./node_modules/three/examples/js/controls/OrbitControls.js"></script>
-	<script src="./node_modules/three/examples/js/loaders/GLTFLoader.js"></script>
+	<script src="./node_modules/dat.gui/build/dat.gui.min.js"></script>
 </head>
 <body>
-	<script src="./blender.js"></script>
-
+	<div id="options-wrapper"></div>
+	<script src="./geometry.js"></script>
 </body>
 </html>
