@@ -151,18 +151,17 @@ function createObject(GeometryClass, generalConfig, ...args) {
 	if (generalConfig.enableWireframe) {
 		const material = new THREE.MeshBasicMaterial({
 			color: generalConfig.material,
+			wireframe: true,
 			reflectivity: 0.6,
 			depthTest: false,
 			opacity: 0.5,
 		});
-		const wireframe = new THREE.WireframeGeometry(geometry);
-		const object = new THREE.LineSegments(wireframe, material);
+		const object = new THREE.Mesh(geometry, material);
 		return object;
 	} else {
-		const material = new THREE.MeshPhongMaterial({
-			color: generalConfig.material,
-			side: THREE.DoubleSide,
-			flatShading: true
+		const color = parseInt((generalConfig.material || '#ff0000').replace('#', '0x'), 16);
+		const material = new THREE.MeshBasicMaterial({
+			color
 		});
 		const object = new THREE.Mesh(geometry, material);
 		return object;
@@ -172,7 +171,7 @@ function createObject(GeometryClass, generalConfig, ...args) {
 class RenderManager {
 	constructor() {
 		this.renderer = createRenderer();
-		this.render = () => {};
+		this.render = () => { };
 
 		this.generalConfig = {
 			type: "BoxGeometry",
@@ -205,7 +204,7 @@ class RenderManager {
 		const camera = createCamera();
 		const render = () => {
 			const scene = new THREE.Scene();
-	
+
 			const args = geometryCfg.params.map(({ key }) => cfg[key]);
 			const cube = createObject(geometryCfg.clazz, this.generalConfig, ...args);
 			// cube.rotation.x = Math.PI / 4;
@@ -223,10 +222,10 @@ class RenderManager {
 		controls.enablePan = false;
 		controls.target.set(0, 0, - 0.2);
 		controls.update();
-	
+
 		return render;
 	}
-	
+
 	rebuild(geometryCfg) {
 		const props = geometryCfg.params.reduce((init, { key, value }) => (init[key] = value, init), {});
 		const render = this.buildRender(props, geometryCfg);
