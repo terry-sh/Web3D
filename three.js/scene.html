@@ -71,8 +71,18 @@
 
 			document.getElementById("webgl-render").appendChild(renderer.domElement);
 
+			let step = 0;
 			function renderScene() {
 				stats.update();
+
+				cube.rotation.x += 0.01;
+				cube.rotation.y += 0.01;
+				cube.rotation.z += 0.01;
+
+				step += 0.04;
+				sphere.position.x = 20 + 10 * (Math.cos(step));
+				sphere.position.y = 2 + 10 * Math.abs(Math.sin(step));
+
 				requestAnimationFrame(renderScene);
 				renderer.render(scene, camera);
 			}
