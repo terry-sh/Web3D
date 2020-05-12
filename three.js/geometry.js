@@ -146,6 +146,26 @@ function createCamera() {
 	return camera;
 }
 
+function createControls(camera, renderer) {
+	const controls = new THREE.OrbitControls(camera, renderer.domElement);
+	controls.minDistance = 4;
+	controls.maxDistance = 18;
+	controls.enableZoom = false;
+	controls.enablePan = false;
+	controls.target.set(0, 0, - 0.2);
+	controls.update();
+	return controls;
+}
+
+function initStats(type) {
+	const panelType = (typeof type !== 'undefined' && type) && !isNaN(type) ? parseInt(type) : 0;
+	const stats = new Stats();
+
+	stats.showPanel(panelType);
+	document.body.appendChild(stats.dom);
+	return stats;
+}
+
 function createObject(GeometryClass, generalConfig, ...args) {
 	const geometry = new GeometryClass(...args);
 	if (generalConfig.enableWireframe) {
@@ -171,7 +191,10 @@ function createObject(GeometryClass, generalConfig, ...args) {
 class RenderManager {
 	constructor() {
 		this.renderer = createRenderer();
-		this.render = () => { };
+		this.camera = createCamera();
+		this.controls = createControls(this.camera, this.renderer);
+		this.stats = initStats();
+		this.render = () => {};
 
 		this.generalConfig = {
 			type: "BoxGeometry",
@@ -190,6 +213,8 @@ class RenderManager {
 		});
 		this.generalControllers = generalControllers;
 		this.generalCfgUI = generalCfgUI;
+
+		window.addEventListener("resize", this.onResize.bind(this)); 
 	}
 
 	onGeometryChange(type) {
@@ -201,10 +226,11 @@ class RenderManager {
 
 	buildRender(cfg, geometryCfg) {
 		const renderer = this.renderer;
-		const camera = createCamera();
+		const camera = this.camera;
 		const render = () => {
+			this.stats.update();
+	
 			const scene = new THREE.Scene();
-
 			const args = geometryCfg.params.map(({ key }) => cfg[key]);
 			const cube = createObject(geometryCfg.clazz, this.generalConfig, ...args);
 			// cube.rotation.x = Math.PI / 4;
@@ -214,15 +240,7 @@ class RenderManager {
 			renderer.render(scene, camera);
 		}
 
-		const controls = new THREE.OrbitControls(camera, renderer.domElement);
-		controls.addEventListener('change', render);
-		controls.minDistance = 4;
-		controls.maxDistance = 18;
-		controls.enableZoom = false;
-		controls.enablePan = false;
-		controls.target.set(0, 0, - 0.2);
-		controls.update();
-
+		this.controls.removeEventListener('change', this.render);
 		return render;
 	}
 
@@ -257,6 +275,14 @@ class RenderManager {
 
 		render();
 		this.render = render;
+		this.controls.addEventListener('change', this.render);
+	}
+
+	onResize() {
+		this.camera.aspect = window.innerWidth / window.innerHeight;
+		this.camera.updateProjectionMatrix();
+		this.renderer.setSize(window.innerWidth, window.innerHeight);
+		this.render();
 	}
 }
 
